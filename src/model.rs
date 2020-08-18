@@ -5,7 +5,7 @@ use crate::ffi;
 use crate::session::{VoskSession, VoskSessionConfig};
 
 pub struct VoskModel {
-    pub(crate) inner: ffi::Model,
+    pub(crate) inner: *mut ffi::VoskModel,
 }
 
 impl VoskModel {
@@ -13,44 +13,44 @@ impl VoskModel {
         let root = unsafe { CString::from_vec_unchecked(root.as_ref().to_string_lossy().as_bytes().to_vec()) };
 
         Self {
-            inner: unsafe { ffi::Model::new(root.as_c_str().as_ptr()) },
+            inner: unsafe { ffi::vosk_model_new(root.as_c_str().as_ptr()) },
         }
     }
 
     #[inline]
     pub fn create_session(&self, cfg: VoskSessionConfig) -> VoskSession {
-        VoskSession::new(&self.inner, cfg)
+        VoskSession::new(self.inner, cfg)
     }
 
     #[inline]
     pub fn feed(&self, sess: &mut VoskSession, data: &[i16]) -> bool {
-        unsafe { ffi::KaldiRecognizer_AcceptWaveform1(&mut sess.inner, data.as_ptr(), data.len() as _) }
+        unsafe { ffi::vosk_recognizer_accept_waveform_s(sess.inner, data.as_ptr(), data.len() as _) == 1 }
     }
 
     #[inline]
     pub fn get_result(&self, sess: &mut VoskSession) -> String {
-        let cstr = unsafe { CStr::from_ptr(ffi::KaldiRecognizer_Result(&mut sess.inner)) };
+        let cstr = unsafe { CStr::from_ptr(ffi::vosk_recognizer_result(sess.inner)) };
 
-        cstr.to_string_lossy().to_string()
+        cstr.to_string_lossy().to_owned().to_string()
     }
 
     #[inline]
     pub fn get_partial_result(&self, sess: &mut VoskSession) -> String {
-        let cstr = unsafe { CStr::from_ptr(ffi::KaldiRecognizer_PartialResult(&mut sess.inner)) };
+        let cstr = unsafe { CStr::from_ptr(ffi::vosk_recognizer_partial_result(sess.inner)) };
 
-        cstr.to_string_lossy().to_string()
+        cstr.to_string_lossy().to_owned().to_string()
     }
 
     #[inline]
     pub fn get_final_result(&self, sess: &mut VoskSession) -> String {
-        let cstr = unsafe { CStr::from_ptr(ffi::KaldiRecognizer_FinalResult(&mut sess.inner)) };
+        let cstr = unsafe { CStr::from_ptr(ffi::vosk_recognizer_final_result(sess.inner)) };
 
-        cstr.to_string_lossy().to_string()
+        cstr.to_string_lossy().to_owned().to_string()
     }
 }
 
 impl Drop for VoskModel {
     fn drop(&mut self) {
-        unsafe { self.inner.destruct() }
+        unsafe { ffi::vosk_model_free(self.inner) }
     }
 }

@@ -1,3 +1,10 @@
+extern crate cblas;
+extern crate openblas_src;
+
+#[used]
+#[no_mangle]
+pub static FLAGS_v: i32 = 0;
+
 mod ffi {
     #![allow(non_upper_case_globals)]
     #![allow(non_camel_case_types)]

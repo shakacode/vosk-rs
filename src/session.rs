@@ -79,23 +79,24 @@ impl VoskSessionConfig {
 }
 
 pub struct VoskSession {
-    pub(crate) inner: ffi::KaldiRecognizer
+    pub(crate) inner: *mut ffi::VoskRecognizer
 }
 
 impl VoskSession {
-    pub(crate) fn new(model: *const ffi::Model, cfg: VoskSessionConfig) -> Self {
+    pub(crate) fn new(model: *const ffi::VoskModel, cfg: VoskSessionConfig) -> Self {
         if let Some(_cfg) = &cfg.spk_root {
             unimplemented!()
             // VoskSession {
             //     inner: ffi::KaldiRecognizer::new1(model as *mut ffi::Model,  cfg.freq)
             // }
         } else if let Some(grammar) = &cfg.grammar {
-            VoskSession {
-                inner: unsafe { ffi::KaldiRecognizer::new2(model as *mut ffi::Model, cfg.freq, grammar.as_c_str().as_ptr()) }
-            }
+            unimplemented!()
+            // VoskSession {
+            //     inner: unsafe { ffi::KaldiRecognizer::new2(model as *mut ffi::Model, cfg.freq, grammar.as_c_str().as_ptr()) }
+            // }
         } else {
             VoskSession {
-                inner: unsafe { ffi::KaldiRecognizer::new(model as *mut ffi::Model, cfg.freq) }
+                inner: unsafe { ffi::vosk_recognizer_new(model as *mut ffi::VoskModel, cfg.freq) }
             }
         }
     }

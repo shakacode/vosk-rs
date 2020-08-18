@@ -3,7 +3,7 @@ use std::path::Path;
 use std::ffi::CString;
 
 pub struct SpeakerModel {
-    pub(crate) inner: ffi::SpkModel
+    pub(crate) inner: *mut ffi::VoskSpkModel
 }
 
 impl SpeakerModel {
@@ -11,13 +11,13 @@ impl SpeakerModel {
         let root = unsafe { CString::from_vec_unchecked(root.to_string_lossy().as_bytes().to_vec()) };
 
         Self {
-            inner: unsafe { ffi::SpkModel::new(root.as_c_str().as_ptr()) }
+            inner: unsafe { ffi::vosk_spk_model_new(root.as_c_str().as_ptr()) }
         }
     }
 }
 
 impl Drop for SpeakerModel {
     fn drop(&mut self) {
-        unsafe { self.inner.destruct() }
+        unsafe { ffi::vosk_spk_model_free(self.inner) }
     }
 }
