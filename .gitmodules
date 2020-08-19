@@ -1,9 +1,6 @@
 [submodule "resources/vosk-api"]
 	path = resources/vosk-api
 	url = https://github.com/andreytkachenko/vosk-api.git
-[submodule "resources/openfst"]
-	path = resources/openfst
-	url = https://github.com/alphacep/openfst
 [submodule "resources/kaldi"]
 	path = resources/kaldi
-	url = https://github.com/andreytkachenko/kaldi
+	url = https://github.com/kaldi-asr/kaldi.git
