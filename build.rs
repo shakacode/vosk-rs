@@ -1,11 +1,56 @@
-use std::{env, fs};
-use std::path::PathBuf;
+use std::{env, fs, io};
+use std::path::{Path, PathBuf};
 use std::process::Command;
+use flate2::read::GzDecoder;
+use tar::Archive;
+use curl::easy::Easy;
+use std::io::Write;
 
+const OPENFST_SRC: &str = "http://www.openfst.org/twiki/pub/FST/FstDownload/openfst-1.6.7.tar.gz";
+
+
+fn download<P: AsRef<Path>>(source_url: &str, target_file: P) -> anyhow::Result<()> {    
+    let f = fs::File::create(&target_file)?;
+    let mut writer = io::BufWriter::new(f);
+    let mut easy = Easy::new();
+    easy.useragent("Curl Download")?;
+    easy.url(source_url)?;
+    easy.write_function(move |data| Ok(writer.write(data).unwrap()))?;
+    easy.perform()?;
+
+    let response_code = easy.response_code()?;
+    if response_code == 200 {
+        Ok(())
+    } else {
+        Err(anyhow::anyhow!(
+            "Unexpected response code {} for {}",
+            response_code,
+            source_url
+        ))
+    }
+}
+
+fn extract<P1: AsRef<Path>, P2: AsRef<Path>>(filename: P1, outpath: P2) -> anyhow::Result<()> {
+    let file = fs::File::open(&filename)?;
+    let tar = GzDecoder::new(file);
+    let mut archive = Archive::new(tar);
+    archive.unpack(outpath.as_ref())?;
+    
+    Ok(())
+}
 
 fn main() {
+    let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
+
     println!("cargo:rerun-if-changed=cbits/vosk.h");
     println!("cargo:rerun-if-changed=build.rs");
+
+    let openfst_name = out_path.join("openfst.tar.gz");
+    let openfst_dir = out_path.join("openfst-1.6.7");
+    if !openfst_dir.exists() {
+        download(OPENFST_SRC, &openfst_name).unwrap();
+        extract(openfst_name, &out_path).unwrap();
+    }
 
     let bindings = bindgen::Builder::default()
         .generate_inline_functions(true)
@@ -13,7 +58,7 @@ fn main() {
         .header("cbits/vosk.h")
         .clang_arg("-I./resources/vosk-api/src/")
         .clang_arg("-I./resources/kaldi/src/")
-        .clang_arg("-I./resources/openfst/src/include")
+        .clang_arg(format!("-I{}", openfst_dir.join("src/include").to_string_lossy()))
         .clang_arg("-std=c++14")
         .clang_arg("-x")
         .clang_arg("c++")
@@ -28,7 +73,6 @@ fn main() {
         .generate()
         .expect("Unable to generate bindings");
 
-    let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
     bindings
         .write_to_file(out_path.join("bindings.rs"))
         .expect("Couldn't write bindings!");
@@ -38,19 +82,19 @@ fn main() {
         .extra_warnings(false)
         .static_flag(true)
         .cpp(true)
-        .include("resources/openfst/src/include")
-        .file("resources/openfst/src/lib/compat.cc")
-        .file("resources/openfst/src/lib/encode.cc")
-        .file("resources/openfst/src/lib/fst-types.cc")
-        .file("resources/openfst/src/lib/fst.cc")
-        .file("resources/openfst/src/lib/mapped-file.cc")
-        .file("resources/openfst/src/lib/properties.cc")
-        .file("resources/openfst/src/lib/symbol-table-ops.cc")
-        .file("resources/openfst/src/lib/symbol-table.cc")
-        .file("resources/openfst/src/lib/util.cc")
-        .file("resources/openfst/src/lib/weight.cc")
-        .file("resources/openfst/src/extensions/ngram/bitmap-index.cc")
-        .file("resources/openfst/src/extensions/ngram/nthbit.cc")
+        .include(openfst_dir.join("src/include"))
+        .file(openfst_dir.join("src/lib/compat.cc"))
+        .file(openfst_dir.join("src/lib/flags.cc"))
+        .file(openfst_dir.join("src/lib/fst-types.cc"))
+        .file(openfst_dir.join("src/lib/fst.cc"))
+        .file(openfst_dir.join("src/lib/mapped-file.cc"))
+        .file(openfst_dir.join("src/lib/properties.cc"))
+        .file(openfst_dir.join("src/lib/symbol-table-ops.cc"))
+        .file(openfst_dir.join("src/lib/symbol-table.cc"))
+        .file(openfst_dir.join("src/lib/util.cc"))
+        .file(openfst_dir.join("src/lib/weight.cc"))
+        .file(openfst_dir.join("src/extensions/ngram/bitmap-index.cc"))
+        .file(openfst_dir.join("src/extensions/ngram/nthbit.cc"))
         .try_compile("libopenfst")
         .unwrap();
 
@@ -61,22 +105,13 @@ fn main() {
         .cpp(true)
         .include("resources/vosk-api/src")
         .include("resources/kaldi/src/")
-        .include("resources/openfst/src/include")
+        .include(openfst_dir.join("src/include"))
         .file("resources/vosk-api/src/kaldi_recognizer.cc")
         .file("resources/vosk-api/src/model.cc")
         .file("resources/vosk-api/src/spk_model.cc")
         .file("resources/vosk-api/src/vosk_api.cc")
         .try_compile("libvosk")
         .unwrap();
-
-    let out_dir = env::var("OUT_DIR").unwrap();
-    let contents = fs::read_to_string("resources/kaldi/src/lat/kaldi-lattice.cc").expect("Something went wrong reading the file");
-
-    let contents = contents.replace("printer.Print(&os, \"<unknown>\");", "printer.Print(os, \"<unknown>\");");
-
-    let kaldi_lattice = format!("{}/kaldi-lattice.cc", out_dir);
-    fs::write(&kaldi_lattice, contents).expect("Write file!");
-    
 
     Command::new("sh")
         .arg("-c")
@@ -91,7 +126,7 @@ fn main() {
         .cpp(true)
         .define("HAVE_OPENBLAS", "true")
         
-        .include("resources/openfst/src/include")
+        .include(openfst_dir.join("src/include"))
         .include("resources/kaldi/src")
 
         // base
@@ -242,7 +277,7 @@ fn main() {
         // .file("resources/kaldi/src/lat/compose-lattice-pruned.cc")
         // .file("resources/kaldi/src/lat/confidence.cc")
         .file("resources/kaldi/src/lat/determinize-lattice-pruned.cc")
-        .file(&kaldi_lattice) // .file("resources/kaldi/src/lat/kaldi-lattice.cc")
+        .file("resources/kaldi/src/lat/kaldi-lattice.cc") // .file("resources/kaldi/src/lat/kaldi-lattice.cc")
         .file("resources/kaldi/src/lat/lattice-functions.cc")
         // .file("resources/kaldi/src/lat/phone-align-lattice.cc")
         .file("resources/kaldi/src/lat/push-lattice.cc")

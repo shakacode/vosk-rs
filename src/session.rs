@@ -89,7 +89,7 @@ impl VoskSession {
             // VoskSession {
             //     inner: ffi::KaldiRecognizer::new1(model as *mut ffi::Model,  cfg.freq)
             // }
-        } else if let Some(grammar) = &cfg.grammar {
+        } else if let Some(_grammar) = &cfg.grammar {
             unimplemented!()
             // VoskSession {
             //     inner: unsafe { ffi::KaldiRecognizer::new2(model as *mut ffi::Model, cfg.freq, grammar.as_c_str().as_ptr()) }
