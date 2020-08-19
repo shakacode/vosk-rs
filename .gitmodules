@@ -6,4 +6,4 @@
 	url = https://github.com/alphacep/openfst
 [submodule "resources/kaldi"]
 	path = resources/kaldi
-	url = https://github.com/kaldi-asr/kaldi
+	url = https://github.com/andreytkachenko/kaldi
