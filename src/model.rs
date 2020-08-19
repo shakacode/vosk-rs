@@ -28,24 +28,24 @@ impl VoskModel {
     }
 
     #[inline]
-    pub fn get_result(&self, sess: &mut VoskSession) -> String {
+    pub fn get_result(&self, sess: &mut VoskSession) -> crate::TranscriptionResult {
         let cstr = unsafe { CStr::from_ptr(ffi::vosk_recognizer_result(sess.inner)) };
 
-        cstr.to_string_lossy().to_owned().to_string()
+        serde_json::from_str(cstr.to_str().unwrap()).unwrap()
     }
 
     #[inline]
-    pub fn get_partial_result(&self, sess: &mut VoskSession) -> String {
+    pub fn get_partial_result(&self, sess: &mut VoskSession) -> crate::TranscriptionPartialResult {
         let cstr = unsafe { CStr::from_ptr(ffi::vosk_recognizer_partial_result(sess.inner)) };
 
-        cstr.to_string_lossy().to_owned().to_string()
+        serde_json::from_str(cstr.to_str().unwrap()).unwrap()
     }
 
     #[inline]
-    pub fn get_final_result(&self, sess: &mut VoskSession) -> String {
+    pub fn get_final_result(&self, sess: &mut VoskSession) -> crate::TranscriptionResult {
         let cstr = unsafe { CStr::from_ptr(ffi::vosk_recognizer_final_result(sess.inner)) };
 
-        cstr.to_string_lossy().to_owned().to_string()
+        serde_json::from_str(cstr.to_str().unwrap()).unwrap()
     }
 }
 

@@ -17,7 +17,9 @@ mod ffi {
 mod model;
 mod session;
 mod speaker;
+mod transcription;
 
 pub use model::VoskModel;
 pub use session::{VoskSession, VoskSessionConfig, VoskSessionConfigBuilder};
 pub use speaker::SpeakerModel;
+pub use transcription::{TranscriptionResult, TranscriptionPartialResult, TranscriptionWord};
