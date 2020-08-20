@@ -101,3 +101,9 @@ impl VoskSession {
         }
     }
 }
+
+impl Drop for VoskSession {
+    fn drop(&mut self) {
+        unsafe { ffi::vosk_recognizer_free(self.inner) }
+    }
+}
