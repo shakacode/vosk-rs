@@ -42,11 +42,11 @@ pub fn main() {
         if model.feed(&mut sess, buff.as_slice()) {
             println!("{:?}", model.get_result(&mut sess));
         } else {
-            println!("{:?}", model.get_partial_result(&mut sess));
+            // println!("{:?}", model.get_partial_result(&mut sess));
         }
     }
 
-    println!("{:?}", model.get_final_result(&mut sess));
+    println!("{:?}", model.get_final_result(sess));
 
     // let audio_buf :Vec<_> = if desc.sample_rate() == SAMPLE_RATE {
     //     .map(|s| s.unwrap()).collect()

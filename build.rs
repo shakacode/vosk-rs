@@ -82,6 +82,7 @@ fn main() {
         .extra_warnings(false)
         .static_flag(true)
         .cpp(true)
+        .flag("-mno-avx")
         .include(openfst_dir.join("src/include"))
         .file(openfst_dir.join("src/lib/compat.cc"))
         .file(openfst_dir.join("src/lib/flags.cc"))
@@ -95,10 +96,10 @@ fn main() {
         .file(openfst_dir.join("src/lib/weight.cc"))
         .file(openfst_dir.join("src/extensions/ngram/bitmap-index.cc"))
         .file(openfst_dir.join("src/extensions/ngram/nthbit.cc"))
-        .try_compile("libopenfst")
-        .unwrap();
+        .compile("libopenfst");
 
     cc::Build::new()
+        .flag("-mno-avx")
         .warnings(false)
         .extra_warnings(false)
         .static_flag(true)
@@ -110,8 +111,7 @@ fn main() {
         .file("resources/vosk-api/src/model.cc")
         .file("resources/vosk-api/src/spk_model.cc")
         .file("resources/vosk-api/src/vosk_api.cc")
-        .try_compile("libvosk")
-        .unwrap();
+        .compile("libvosk");
 
     Command::new("sh")
         .arg("-c")
@@ -120,6 +120,7 @@ fn main() {
         .expect("Failed get_version.sh!");
 
     cc::Build::new()
+        .flag("-mno-avx")
         .warnings(false)
         .extra_warnings(false)
         .static_flag(true)
@@ -315,7 +316,5 @@ fn main() {
         // .file("resources/kaldi/src/online2/online-speex-wrapper.cc")
         .file("resources/kaldi/src/online2/online-timing.cc")
         // .file("resources/kaldi/src/online2/onlinebin-util.cc")
-        
-        .try_compile("libkaldi")
-        .unwrap();
+        .compile("libkaldi");
 }
