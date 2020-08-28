@@ -1,4 +1,4 @@
-extern crate cblas;
+extern crate cblas_src;
 extern crate openblas_src;
 
 #[used]

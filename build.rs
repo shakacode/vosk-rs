@@ -40,8 +40,7 @@ fn extract<P1: AsRef<Path>, P2: AsRef<Path>>(filename: P1, outpath: P2) -> anyho
 }
 
 fn main() {
-    // println!("cargo:rustc-link-lib=dylib=lapacke");
-    // println!("cargo:rustc-link-lib=dylib=cblas");
+    println!("cargo:rustc-link-lib=dylib=lapack");
 
     let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
 
