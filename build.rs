@@ -99,7 +99,7 @@ fn main() {
         .file(openfst_dir.join("src/extensions/ngram/bitmap-index.cc"))
         .file(openfst_dir.join("src/extensions/ngram/nthbit.cc"))
         .compile("libopenfst");
-
+    
     cc::Build::new()
         .flag("-mno-avx")
         .warnings(false)
