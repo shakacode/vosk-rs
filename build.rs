@@ -6,8 +6,7 @@ use tar::Archive;
 use curl::easy::Easy;
 use std::io::Write;
 
-const OPENFST_SRC: &str = "http://www.openfst.org/twiki/pub/FST/FstDownload/openfst-1.6.7.tar.gz";
-
+const OPENFST_SRC: &str = "https://www.openfst.org/twiki/pub/FST/FstDownload/openfst-1.6.7.tar.gz";
 
 fn download<P: AsRef<Path>>(source_url: &str, target_file: P) -> anyhow::Result<()> {    
     let f = fs::File::create(&target_file)?;
